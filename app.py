@@ -5,10 +5,10 @@ import joblib
 model = joblib.load("churn_model.pkl")
 preprocessor = joblib.load("preprocessor.pkl")
 model_columns = joblib.load("model_columns.pkl")
+cat_cols = joblib.load("cat_cols.pkl")
+num_cols = joblib.load("num_cols.pkl")
 
 st.title("Telecom Customer Churn Prediction")
-
-st.write("Enter customer details")
 
 tenure = st.number_input("Tenure Months", 0, 100, 12)
 monthly = st.number_input("Monthly Charges", 0.0, 500.0, 70.0)
@@ -17,8 +17,17 @@ contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
 internet = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
 
 if st.button("Predict"):
-    input_dict = {col: 0 for col in model_columns}
 
+    # Initialize with correct types
+    input_dict = {}
+
+    for col in model_columns:
+        if col in num_cols:
+            input_dict[col] = 0
+        else:
+            input_dict[col] = "Unknown"
+
+    # Fill known values
     input_dict["Tenure Months"] = tenure
     input_dict["Monthly Charges"] = monthly
     input_dict["Total Charges"] = total
@@ -32,6 +41,6 @@ if st.button("Predict"):
     prob = model.predict_proba(input_processed)[0][1]
 
     if pred == 1:
-        st.error(f"Customer will Churn (Probability: {prob:.2f})")
+        st.error(f"⚠️ Customer likely to Churn (Probability: {prob:.2f})")
     else:
-        st.success(f"Customer will Stay (Probability: {1-prob:.2f})")
+        st.success(f"✅ Customer likely to Stay (Probability: {1-prob:.2f})")
