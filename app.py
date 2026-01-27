@@ -47,19 +47,24 @@ if page == "Overview":
 
     st.subheader("🔍 Quick Dataset Summary")
 
+    # Clean dataset for correct missing value display
+    clean_df = df.drop(columns=["Churn Reason"])
+    clean_df["Total Charges"] = pd.to_numeric(clean_df["Total Charges"], errors="coerce")
+    clean_df["Total Charges"] = clean_df["Total Charges"].fillna(clean_df["Total Charges"].median())
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Rows", df.shape[0])
     with col2:
         st.metric("Total Columns", df.shape[1])
     with col3:
-        st.metric("Total Missing Values", int(df.isnull().sum().sum()))
+        st.metric("Total Missing Values (After Cleaning)", int(clean_df.isnull().sum().sum()))
 
     st.subheader("📄 Top 20 Rows Preview")
     st.dataframe(df.head(20))
 
     st.subheader("📈 Summary Statistics")
-    st.dataframe(df.describe())
+    st.dataframe(clean_df.describe())
 # =========================
 # EDA PAGE
 # =========================
@@ -114,35 +119,39 @@ elif page == "EDA":
 # MODEL METRICS PAGE
 # =========================
 elif page == "Model Metrics":
-    st.header("🤖 Model Performance & Evaluation")
+    st.header("🤖 Model Performance & Comparison")
 
-    st.subheader("1. Model Comparison (Test Set Performance)")
-    st.dataframe(metrics_df)
+    st.subheader("Model Comparison (Test Set Metrics)")
 
-    st.subheader("2. Training vs Testing Accuracy (Random Forest)")
+    # Format numbers to 4 decimals
+    formatted_df = metrics_df.copy()
+    for col in ["Accuracy", "Precision", "Recall", "F1", "ROC-AUC"]:
+        formatted_df[col] = formatted_df[col].apply(lambda x: round(x, 4))
+
+    st.dataframe(formatted_df, use_container_width=True)
+
+    st.subheader("Training vs Testing Accuracy (Random Forest)")
     rf_acc_df = pd.DataFrame({
         "Dataset": ["Training Accuracy", "Testing Accuracy"],
-        "Accuracy": [0.96, 0.924]   # you can update train accuracy if you stored exact value
+        "Accuracy": [0.96, 0.9319]  # update train accuracy if you have exact value
     })
     st.table(rf_acc_df)
 
-    st.subheader("3. Confusion Matrix")
-    st.image("confusion_matrix.png", caption="Confusion Matrix - Random Forest")
+    st.subheader("Confusion Matrix")
+    st.image("confusion_matrix.png")
 
-    st.subheader("4. ROC Curve")
-    st.image("roc_curve.png", caption="ROC Curve - Random Forest")
+    st.subheader("ROC Curve")
+    st.image("roc_curve.png")
 
-    st.subheader("5. Why Random Forest?")
+    st.subheader("Why Random Forest?")
     st.markdown("""
-    Random Forest was selected as the final model because:
-
-    • It achieved the **highest test accuracy (~92.4%)** among all models  
-    • It showed the **best F1-score and ROC-AUC**, important for imbalanced data  
-    • It handles **non-linear relationships** between customer behavior features  
-    • It is more robust and less prone to overfitting than a single Decision Tree  
-    • Hyperparameter tuning using **GridSearchCV** further improved generalization  
+    - Highest Accuracy (93.18%)
+    - Best F1-score (0.8699)
+    - High ROC-AUC (0.9709)
+    - Handles non-linear relationships
+    - Robust to overfitting due to ensemble learning
+    - Performed best after GridSearchCV tuning
     """)
-
 # =========================
 # PREDICTION PAGE
 # =========================
@@ -185,3 +194,4 @@ elif page == "Prediction":
             st.error(f"⚠️ Customer is likely to CHURN\n\nProbability: {prob:.2f}")
         else:
             st.success(f"✅ Customer is likely to STAY\n\nProbability: {1-prob:.2f}")
+
