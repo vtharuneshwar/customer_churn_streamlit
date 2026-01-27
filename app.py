@@ -123,17 +123,20 @@ elif page == "Model Metrics":
 
     st.subheader("Model Comparison (Test Set Metrics)")
 
-    # Format numbers to 4 decimals
-    formatted_df = metrics_df.copy()
-    for col in ["Accuracy", "Precision", "Recall", "F1", "ROC-AUC"]:
-        formatted_df[col] = formatted_df[col].apply(lambda x: round(x, 4))
+    # Set Model column as index for better table view
+    comparison_df = metrics_df.copy()
+    if "Model" in comparison_df.columns:
+        comparison_df.set_index("Model", inplace=True)
 
-    st.dataframe(formatted_df, use_container_width=True)
+    # Round all numeric values
+    comparison_df = comparison_df.round(4)
+
+    st.dataframe(comparison_df, use_container_width=True)
 
     st.subheader("Training vs Testing Accuracy (Random Forest)")
     rf_acc_df = pd.DataFrame({
         "Dataset": ["Training Accuracy", "Testing Accuracy"],
-        "Accuracy": [0.96, 0.9319]  # update train accuracy if you have exact value
+        "Accuracy": [0.96, 0.9319]  # replace train accuracy if you saved exact value
     })
     st.table(rf_acc_df)
 
@@ -143,14 +146,14 @@ elif page == "Model Metrics":
     st.subheader("ROC Curve")
     st.image("roc_curve.png")
 
-    st.subheader("Why Random Forest?")
+    st.subheader("Why Random Forest Was Selected")
     st.markdown("""
-    - Highest Accuracy (93.18%)
-    - Best F1-score (0.8699)
-    - High ROC-AUC (0.9709)
-    - Handles non-linear relationships
-    - Robust to overfitting due to ensemble learning
-    - Performed best after GridSearchCV tuning
+    - Random Forest achieved the **highest accuracy (93.18%)** among all models.
+    - It produced the **best F1-score (0.8699)**, important for imbalanced churn data.
+    - It showed **high ROC-AUC (0.9709)**, indicating strong class separation.
+    - It captures **non-linear relationships** between customer behavior and churn.
+    - As an ensemble model, it is **more stable and less prone to overfitting** than single models.
+    - Hyperparameter tuning using **GridSearchCV** further improved its performance.
     """)
 # =========================
 # PREDICTION PAGE
@@ -194,4 +197,5 @@ elif page == "Prediction":
             st.error(f"⚠️ Customer is likely to CHURN\n\nProbability: {prob:.2f}")
         else:
             st.success(f"✅ Customer is likely to STAY\n\nProbability: {1-prob:.2f}")
+
 
