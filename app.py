@@ -7,6 +7,44 @@ import seaborn as sns
 st.set_page_config(page_title="Customer Churn Analytics & Prediction", layout="wide")
 
 # =========================
+# Custom CSS Styling
+# =========================
+st.markdown("""
+<style>
+.main {background-color: #f7f9fc;}
+h1 {color: #0f172a; font-weight: 800;}
+h2, h3 {color: #1e293b;}
+
+.metric-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.metric-title {
+    font-size: 16px;
+    color: #64748b;
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.section-card {
+    background-color: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =========================
 # Load Files
 # =========================
 df = pd.read_csv("Telco_customer_churn.csv")
@@ -21,10 +59,7 @@ metrics_df = pd.read_csv("model_metrics.csv")
 # Sidebar Navigation
 # =========================
 st.sidebar.title("📌 Navigation")
-page = st.sidebar.radio(
-    "Select Page",
-    ["Overview", "EDA", "Model Metrics", "Prediction"]
-)
+page = st.sidebar.radio("Select Page", ["Overview", "EDA", "Model Metrics", "Prediction"])
 
 st.title("📊 Telecom Customer Churn Analysis & Prediction System")
 
@@ -32,6 +67,7 @@ st.title("📊 Telecom Customer Churn Analysis & Prediction System")
 # OVERVIEW PAGE
 # =========================
 if page == "Overview":
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.header("📌 Project Overview")
 
     st.markdown("""
@@ -45,61 +81,73 @@ if page == "Overview":
     Optimized Random Forest Classifier (with SMOTE & GridSearchCV)
     """)
 
-    st.subheader("🔍 Quick Dataset Summary")
-
-    # Clean dataset for correct missing value display
     clean_df = df.drop(columns=["Churn Reason"])
     clean_df["Total Charges"] = pd.to_numeric(clean_df["Total Charges"], errors="coerce")
     clean_df["Total Charges"] = clean_df["Total Charges"].fillna(clean_df["Total Charges"].median())
 
     col1, col2, col3 = st.columns(3)
+
     with col1:
-        st.metric("Total Rows", df.shape[0])
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-title">Total Rows</div>
+            <div class="metric-value">{df.shape[0]}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col2:
-        st.metric("Total Columns", df.shape[1])
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-title">Total Columns</div>
+            <div class="metric-value">{df.shape[1]}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col3:
-        st.metric("Total Missing Values (After Cleaning)", int(clean_df.isnull().sum().sum()))
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-title">Missing Values (After Cleaning)</div>
+            <div class="metric-value">{int(clean_df.isnull().sum().sum())}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.subheader("📄 Top 20 Rows Preview")
     st.dataframe(df.head(20))
 
     st.subheader("📈 Summary Statistics")
     st.dataframe(clean_df.describe())
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # =========================
 # EDA PAGE
 # =========================
 elif page == "EDA":
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.header("📈 Exploratory Data Analysis (EDA)")
 
-    st.subheader("1. Churn Distribution")
     churn_counts = df["Churn Label"].value_counts()
     fig1, ax1 = plt.subplots()
     ax1.bar(churn_counts.index, churn_counts.values)
-    ax1.set_xlabel("Churn")
-    ax1.set_ylabel("Count")
     ax1.set_title("Churn Distribution")
     st.pyplot(fig1)
 
-    st.subheader("2. Tenure vs Churn")
     fig2, ax2 = plt.subplots()
     sns.boxplot(x="Churn Label", y="Tenure Months", data=df, ax=ax2)
     ax2.set_title("Tenure vs Churn")
     st.pyplot(fig2)
 
-    st.subheader("3. Monthly Charges vs Churn")
     fig3, ax3 = plt.subplots()
     sns.boxplot(x="Churn Label", y="Monthly Charges", data=df, ax=ax3)
     ax3.set_title("Monthly Charges vs Churn")
     st.pyplot(fig3)
 
-    st.subheader("4. Contract Type vs Churn")
     fig4, ax4 = plt.subplots()
     sns.countplot(x="Contract", hue="Churn Label", data=df, ax=ax4)
     ax4.set_title("Contract Type vs Churn")
     plt.xticks(rotation=30)
     st.pyplot(fig4)
 
-    st.subheader("5. Correlation Heatmap (Numerical Features)")
     corr_df = df[["Tenure Months", "Monthly Charges", "Total Charges", "CLTV", "Churn Value"]].copy()
     corr_df["Total Charges"] = pd.to_numeric(corr_df["Total Charges"], errors="coerce")
 
@@ -108,37 +156,20 @@ elif page == "EDA":
     ax5.set_title("Correlation Heatmap")
     st.pyplot(fig5)
 
-    st.markdown("""
-    **EDA Observations:**
-    - Customers with low tenure are more likely to churn.
-    - Month-to-month contracts show the highest churn rate.
-    - Higher monthly charges are associated with higher churn.
-    - Tenure and Contract Type are strong indicators of churn.
-    """)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # =========================
 # MODEL METRICS PAGE
 # =========================
 elif page == "Model Metrics":
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.header("🤖 Model Performance & Comparison")
 
-    st.subheader("Model Comparison (Test Set Metrics)")
-
-    # Set Model column as index for better table view
     comparison_df = metrics_df.copy()
     if "Model" in comparison_df.columns:
         comparison_df.set_index("Model", inplace=True)
 
-    # Round all numeric values
-    comparison_df = comparison_df.round(4)
-
-    st.dataframe(comparison_df, use_container_width=True)
-
-    st.subheader("Training vs Testing Accuracy (Random Forest)")
-    rf_acc_df = pd.DataFrame({
-        "Dataset": ["Training Accuracy", "Testing Accuracy"],
-        "Accuracy": [0.96, 0.9319]  # replace train accuracy if you saved exact value
-    })
-    st.table(rf_acc_df)
+    st.dataframe(comparison_df.round(4), use_container_width=True)
 
     st.subheader("Confusion Matrix")
     st.image("confusion_matrix.png")
@@ -146,19 +177,13 @@ elif page == "Model Metrics":
     st.subheader("ROC Curve")
     st.image("roc_curve.png")
 
-    st.subheader("Why Random Forest Was Selected")
-    st.markdown("""
-    - Random Forest achieved the **highest accuracy (93.18%)** among all models.
-    - It produced the **best F1-score (0.8699)**, important for imbalanced churn data.
-    - It showed **high ROC-AUC (0.9709)**, indicating strong class separation.
-    - It captures **non-linear relationships** between customer behavior and churn.
-    - As an ensemble model, it is **more stable and less prone to overfitting** than single models.
-    - Hyperparameter tuning using **GridSearchCV** further improved its performance.
-    """)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # =========================
 # PREDICTION PAGE
 # =========================
 elif page == "Prediction":
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.header("🔮 Customer Churn Prediction")
 
     col1, col2 = st.columns(2)
@@ -174,12 +199,7 @@ elif page == "Prediction":
 
     if st.button("Predict Churn"):
 
-        input_dict = {}
-        for col in model_columns:
-            if col in num_cols:
-                input_dict[col] = 0
-            else:
-                input_dict[col] = "Unknown"
+        input_dict = {col: 0 if col in num_cols else "Unknown" for col in model_columns}
 
         input_dict["Tenure Months"] = tenure
         input_dict["Monthly Charges"] = monthly
@@ -193,9 +213,14 @@ elif page == "Prediction":
         pred = model.predict(input_processed)[0]
         prob = model.predict_proba(input_processed)[0][1]
 
+        st.subheader("📊 Prediction Result")
+
+        st.progress(int(prob * 100))
+        st.caption(f"Churn Probability: {prob*100:.2f}%")
+
         if pred == 1:
-            st.error(f"⚠️ Customer is likely to CHURN\n\nProbability: {prob:.2f}")
+            st.error(f"⚠️ Customer is likely to CHURN")
         else:
-            st.success(f"✅ Customer is likely to STAY\n\nProbability: {1-prob:.2f}")
+            st.success(f"✅ Customer is likely to STAY")
 
-
+    st.markdown('</div>', unsafe_allow_html=True)
